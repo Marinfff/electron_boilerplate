@@ -27,6 +27,11 @@
       placeholder="Placeholder"
       outlined
     />
+    <v-textarea
+          solo
+          name="input-7-4"
+          label="Solo textarea"
+        />
     <v-btn text small color="error">Error</v-btn>
   </div>
 
