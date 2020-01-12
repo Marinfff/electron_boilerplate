@@ -29,10 +29,10 @@ class App {
 
   createWindow() {
     this.window = new BrowserWindow({
-      width: 1450,
-      height: 800,
-      minWidth: 1400,
-      minHeight: 800,
+      width: 800,
+      height: 600,
+      minWidth: 800,
+      minHeight: 600,
       title: 'My app',
       transparent: true,
       frame: false,
