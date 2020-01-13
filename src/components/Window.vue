@@ -1,14 +1,12 @@
 <script>
-  const fs = require("fs");
-  import db from "../facades/db"
+  import xlsx from "xlsx";
+  import fs from "fs";
+  import db from "../facades/db";
 
   export default {
     name: 'Window',
     data() {
       return {
-        dataBd: '',
-        data: '',
-        text: '',
         first_name: '',
         second_name: '',
         users: []
@@ -17,45 +15,59 @@
     mounted() {
     },
     methods: {
-      readText() {
-        this.data = fs.readFileSync("./src/files/data.txt", "utf8");
+      readFromTxt(path) {
+        let items = [];
+
+        fs.readFile(path, "utf8", (error, data) => {
+          items = data
+        });
+        return items
       },
-      writeText() {
-        fs.writeFile("./src/files/data.txt", this.text, (error) => {
-          if (error) throw error; // если возникла ошибка
+      writeToTxt(path, text) {
+        fs.writeFile(path, text, (error) => {
+          if (error) {
+            throw error;
+          } else {
+            console.log('Сохранено!');
+          }
         });
       },
-      async readBd() {
-        this.users = await db.query(`SELECT * FROM users`)
+      async readFromDB() {
+        try {
+          this.users = await db.query(`SELECT * FROM users`)
+        } catch {
+          console.log('Ошибка чтения!')
+        }
       },
-      writeBd() {
-        db.query(`INSERT INTO users (first_name, second_name)
-        VALUES ('${this.first_name}', '${this.second_name}');`)
+      async writeToDB() {
+        try {
+          await db.query(`
+            INSERT INTO users (first_name, second_name)
+            VALUES ('${this.first_name}', '${this.second_name}');
+          `)
+        } catch {
+          console.log('Ошибка записи!')
+        }
       },
-      readBdinFile() {
-        this.dataBd = JSON.parse(fs.readFileSync("./src/files/dataBd.txt", "utf8"));
-        console.log(this.dataBd);
+      readFromExcel(path, page) {
+        const wordbook = xlsx.readFile(path);
+        const sheet_name_list = wordbook.SheetNames;
+
+        return xlsx.utils.sheet_to_json(wordbook.Sheets[sheet_name_list[page]])
       },
-      writeBdinFile() {
-        fs.writeFile("./src/files/dataBd.txt", JSON.stringify(this.users), (error) => {
-          if (error) throw error; // если возникла ошибка
-        });
+      writeToExcel(path, data) {
+        const newWB = xlsx.utils.book_new();
+        const newWS = xlsx.utils.json_to_sheet(data)
+
+        xlsx.utils.book_append_sheet(newWB, newWS, 'Table')
+        xlsx.writeFile(newWB, path)
       }
     },
-
   };
 </script>
 
 <template>
   <div>
-    <v-textarea
-      v-model="text"
-      solo
-      name="input-7-4"
-      label="Solo textarea"
-    />
-    <v-btn @click="readText()" small color="green">read</v-btn>
-    <v-btn @click="writeText()" small color="blue">write</v-btn>
     <v-text-field
       v-model="first_name"
       label="first name"
@@ -64,12 +76,6 @@
       v-model="second_name"
       label="second name"
     />
-    <v-btn @click="readBd()" small color="green">readBD</v-btn>
-    <v-btn @click="writeBd()" small color="blue">writeBD</v-btn>
-    <br>
-    <v-btn @click="readBdinFile()" small color="pink">readBDinFile</v-btn>
-    <v-btn @click="writeBdinFile()" small color="aquamarine">writeBDinFile</v-btn>
-    <div v-for="item in users">{{item.first_name}} {{item.second_name}}</div>
   </div>
 
 </template>
